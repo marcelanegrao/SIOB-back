@@ -1,26 +1,32 @@
-import express from "express";
-import cors from "cors";
-import helmet from "helmet";
 import "reflect-metadata";
+import "express-async-errors";
+import express, { NextFunction, Request, Response } from "express";
+import cors from "cors";
+import "../../container"; // Importa o container
+import { router } from "./routes";
+import { AppError } from "../../errors/AppError";
+import { AppDataSource } from "../typeorm/data-source";
 
-// Futuramente importaremos as rotas aqui
-// import { router } from "./routes"; 
+// Inicializa Banco de Dados
+AppDataSource.initialize()
+  .then(() => console.log("Database initialized!"))
+  .catch((err) => console.error("Error initializing database:", err));
 
 const app = express();
 
-// Middlewares Globais
-app.use(cors()); 
-app.use(helmet()); 
+app.use(cors());
 app.use(express.json());
+app.use(router);
 
-// Rota de Health Check
-app.get("/", (req, res) => {
-    res.json({ 
-        message: "API SIOB Operante 🚀",
-        docs: "/api-docs" // Placeholder para o Swagger futuro
-    });
+// Middleware de Erro
+app.use((err: Error, request: Request, response: Response, next: NextFunction) => {
+  if (err instanceof AppError) {
+    return response.status(err.statusCode).json({ message: err.message });
+  }
+  return response.status(500).json({
+    status: "error",
+    message: `Internal server error - ${err.message}`,
+  });
 });
-
-// app.use(router);
 
 export { app };

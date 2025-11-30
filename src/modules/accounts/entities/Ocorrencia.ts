@@ -1,75 +1,38 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from "typeorm";
 import { v4 as uuidV4 } from "uuid";
-// Importamos o User APENAS para tipagem do relacionamento. 
-// O TypeORM resolve a chave estrangeira mesmo que a tabela users ainda não exista fisicamente na sua branch
-import { User } from "../../accounts/entities/User"; 
-
-export enum OcorrenciaStatus {
-    PENDENTE = "Pendente",
-    EM_ANDAMENTO = "Em andamento",
-    CONCLUIDA = "Concluída",
-    CANCELADA = "Cancelada",
-    TROTE = "Trote",
-    OCORRENCIA_BASICA = "Ocorrência Básica"
-}
-
-export enum Prioridade {
-    ALTA = "Alta",
-    MEDIA = "Média",
-    BAIXA = "Baixa"
-}
+import { User } from "../../accounts/entities/User";
 
 @Entity("ocorrencias")
 export class Ocorrencia {
-    @PrimaryGeneratedColumn("uuid")
-    id?: string;
+  @PrimaryGeneratedColumn("uuid")
+  id?: string;
 
-    @Column()
-    tipo!: string; // Ex: Incêndio, Salvamento
+  @Column()
+  titulo!: string;
 
-    @Column({
-        type: "enum",
-        enum: OcorrenciaStatus,
-        default: OcorrenciaStatus.PENDENTE
-    })
-    status!: OcorrenciaStatus;
+  @Column("decimal", { precision: 10, scale: 6 })
+  latitude!: number;
 
-    @Column({
-        type: "enum",
-        enum: Prioridade,
-        default: Prioridade.MEDIA
-    })
-    prioridade!: Prioridade;
+  @Column("decimal", { precision: 10, scale: 6 })
+  longitude!: number;
 
-    @Column()
-    regiao!: string;
+  @Column()
+  tipo!: string; // Incêndio, APH, etc.
 
-    @Column({ nullable: true })
-    numAviso?: string; // Ex: OC-2025-001
+  @Column({ default: "Pendente" })
+  status!: string;
 
-    @Column()
-    data!: Date;
+  @Column()
+  usuarioId!: string;
 
-    // O "Pulo do Gato": Salva o formulário React inteiro aqui dentro
-    @Column({ type: "json", nullable: true })
-    formulariosPreenchidos?: object; 
+  @ManyToOne(() => User)
+  @JoinColumn({ name: "usuarioId" })
+  usuario!: User;
 
-    @Column({ nullable: true })
-    usuarioId?: string;
+  @CreateDateColumn()
+  created_at!: Date;
 
-    @ManyToOne(() => User)
-    @JoinColumn({ name: "usuarioId" })
-    usuario?: User;
-
-    @CreateDateColumn()
-    created_at!: Date;
-
-    @UpdateDateColumn()
-    updated_at!: Date;
-
-    constructor() {
-        if (!this.id) {
-            this.id = uuidV4();
-        }
-    }
+  constructor() {
+    if (!this.id) this.id = uuidV4();
+  }
 }
